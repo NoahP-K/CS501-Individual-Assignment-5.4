@@ -37,7 +37,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.individualassignment_54.ui.theme.IndividualAssignment_54Theme
@@ -229,18 +232,28 @@ data class gameBoard(
     val endY: Float
 )
 
-fun sampleGameBoard0(radius: Float, window: WindowInfo): gameBoard{
+fun sampleGameBoard0(radius: Float, window: WindowInfo, density: Density, innerPadding: PaddingValues): gameBoard{
     val ret = gameBoard(
-        radius + 20,
-        radius + 20,
+        radius + 60,
+        radius + 60,
         arrayOf(
-            gameWall(x = 0f, y = -10f, w = (window.widthDp).toFloat(), h = 20f),
-            gameWall(x = -10f, y = 0f, w = 20f, h = (window.heightDp).toFloat()),
-            gameWall(x = (window.widthDp).toFloat() - 10, y = 0f, w = 20f, h = (window.heightDp).toFloat()),
-            gameWall(x = 0f, y = (window.heightDp).toFloat() - 10, w = (window.widthDp).toFloat(), h = 20f)
+            gameWall(x = 0f, y = 0f, w = window.widthDp.toFloat(), h = 20f),
+            gameWall(x = 0f, y = 0f, w = 20f, h = window.heightDp.toFloat()),
+            gameWall(x = window.widthDp.toFloat() - 20, y = 0f, w = 20f, h = window.heightDp.toFloat()),
+            gameWall(x = 0f, y = window.heightDp.toFloat() - innerPadding.calculateBottomPadding().value*3, w = window.widthDp.toFloat(), h = 20f),
+            gameWall(x = 100f, y = 0f, w = 20f, h = 400f),
+            gameWall(x = 100f, y = 550f, w = 20f, h = 400f),
+            gameWall(x = 200f, y = 100f, w = 90f, h = 20f),
+            gameWall(x = 200f, y = 100f, w = 20f, h = 800f),
+            gameWall(x = 300f, y = 200f, w = 20f, h = 250f),
+            gameWall(x = 300f, y = 450f, w = 120f, h = 20f),
+            gameWall(x = 200f, y = 550f, w = 120f, h = 20f),
+            gameWall(x = 300f, y = 650f, w = 120f, h = 20f),
+            gameWall(x = 200f, y = 750f, w = 120f, h = 20f)
+
         ),
-        window.widthDp.toFloat() - 50,
-        window.heightDp.toFloat() - 50
+        window.widthDp.toFloat() - 170,
+        window.heightDp.toFloat() - 100
     )
 
     return ret
@@ -257,15 +270,15 @@ fun checkWin(ballX: Float, ballY: Float, winX: Float, winY: Float, winR: Float):
 fun MakeScreen(ax: Float, ay: Float, az: Float,
                pitch: Float, roll: Float){
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         val window = calculateCurrentWindowInfo()
-        val radius = 70f
+        val radius = 30f
         val winnerCircleRadius = radius
-        val ballSpeed = 40
+        val ballSpeed = 30
         var ballPos by remember {
             mutableStateOf(
                 Offset(
@@ -276,7 +289,7 @@ fun MakeScreen(ax: Float, ay: Float, az: Float,
         }
 
         val board by remember {
-            mutableStateOf(sampleGameBoard0(radius, window))
+            mutableStateOf(sampleGameBoard0(radius, window, density, innerPadding))
         }
 
         var newX = ballPos.x + (pitch / 45) * (-1*ballSpeed)
@@ -307,23 +320,26 @@ fun MakeScreen(ax: Float, ay: Float, az: Float,
         ) {
             drawCircle(
                 color = Color.DarkGray,
-                radius = radius,
-                center = ballPos
+                radius = with(density){radius.dp.toPx()},
+                center = with(density){Offset(x=ballPos.x.dp.toPx(), y=ballPos.y.dp.toPx())}
             )
 
             drawCircle(
                 color = Color.Green,
-                radius = winnerCircleRadius,
-                center = Offset(board.endX, board.endY)
+                radius = with(density){winnerCircleRadius.dp.toPx()},
+                center = with(density){Offset(board.endX.dp.toPx(), board.endY.dp.toPx())}
             )
 
             for (wall in board.walls) {
                 drawRect(
                     color = Color.LightGray,
-                    topLeft = Offset(x = wall.x, y = wall.y),
+                    topLeft = Offset(
+                        x = with(density){ wall.x.dp.toPx()},
+                        y = with(density){ wall.y.dp.toPx()}
+                    ),
                     size = Size(
-                        width = wall.w,
-                        height = wall.h
+                        width = with(density){wall.w.dp.toPx()},
+                        height = with(density) { wall.h.dp.toPx() }
                     )
                 )
             }
@@ -372,10 +388,10 @@ enum class Orientation {
     LANDSCAPE_L
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 411, heightDp = 915, showSystemUi = true)
 @Composable
 fun GreetingPreview() {
     IndividualAssignment_54Theme {
-
+        MakeScreen(0f,0f,0f,0f,0f)
     }
 }
